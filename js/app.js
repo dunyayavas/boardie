@@ -9,6 +9,12 @@ window.modal = null;
 window.tagManager = null;
 window.uiManager = null;
 
+// Component managers
+window.themeManager = null;
+window.postManager = null;
+window.authManager = null;
+window.linkManager = null;
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -70,16 +76,17 @@ async function initializeUIComponents() {
         .then(() => {
           console.log('Tags loaded');
           
-          // Create UI manager last
-          window.uiManager = new UIManager();
-          console.log('UI manager initialized');
+          // This object is already created in uiManager.js and made available globally
+          console.log('UI manager initialization starting...');
+          
+          // The UIManager constructor will automatically initialize all the required components
+          // since we're now using class-based initialization
           
           resolve();
         })
         .catch(error => {
           console.error('Error loading tags:', error);
           // Continue anyway
-          window.uiManager = new UIManager();
           resolve();
         });
     } catch (error) {
@@ -179,7 +186,15 @@ function setupEventListeners() {
 async function loadInitialData() {
   try {
     // Load posts
-    uiManager.loadPosts();
+    if (window.postManager) {
+      window.postManager.loadPosts();
+    } else {
+      console.error('PostManager not initialized');
+      // Fallback to uiManager if postManager is not available
+      if (window.uiManager) {
+        window.uiManager.loadPosts();
+      }
+    }
     
     return Promise.resolve();
   } catch (error) {

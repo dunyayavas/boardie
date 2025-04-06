@@ -110,5 +110,5 @@ class ThemeManager {
   }
 }
 
-// Create and export a singleton instance
-const themeManager = new ThemeManager();
+// Make ThemeManager available globally
+window.ThemeManager = ThemeManager;

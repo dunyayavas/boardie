@@ -509,5 +509,5 @@ class PostManager {
   }
 }
 
-// Create and export a singleton instance
-const postManager = new PostManager();
+// Make PostManager available globally
+window.PostManager = PostManager;

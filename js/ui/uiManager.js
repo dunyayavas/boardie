@@ -36,24 +36,18 @@ class UIManager {
    */
   async initializeComponents() {
     try {
-      // Load component modules
+      // Wait for components to be loaded from script tags
       await this.loadComponentModules();
       
-      // Initialize theme manager
+      // Initialize components with direct assignment to avoid circular references
       this.components.theme = window.themeManager;
-      
-      // Initialize post manager
       this.components.posts = window.postManager;
-      
-      // Initialize auth manager
       this.components.auth = window.authManager;
-      
-      // Initialize link manager
       this.components.link = window.linkManager;
       
       return Promise.resolve();
     } catch (error) {
-      console.error('Error initializing UI components:', error);
+      console.error('Error initializing components:', error);
       return Promise.reject(error);
     }
   }
@@ -62,15 +56,38 @@ class UIManager {
    * Load component modules
    */
   async loadComponentModules() {
+    console.log('Checking for component modules...');
     // Components are loaded via script tags in index.html
     // This method ensures they're all available
     return new Promise((resolve) => {
+      // Create component instances if they don't exist
+      if (!window.themeManager && typeof ThemeManager !== 'undefined') {
+        window.themeManager = new ThemeManager();
+        console.log('ThemeManager created');
+      }
+      
+      if (!window.postManager && typeof PostManager !== 'undefined') {
+        window.postManager = new PostManager();
+        console.log('PostManager created');
+      }
+      
+      if (!window.authManager && typeof AuthManager !== 'undefined') {
+        window.authManager = new AuthManager();
+        console.log('AuthManager created');
+      }
+      
+      if (!window.linkManager && typeof LinkManager !== 'undefined') {
+        window.linkManager = new LinkManager();
+        console.log('LinkManager created');
+      }
+      
       const checkInterval = setInterval(() => {
         if (window.themeManager && 
             window.postManager && 
             window.authManager && 
             window.linkManager) {
           clearInterval(checkInterval);
+          console.log('All components loaded successfully');
           resolve();
         }
       }, 50);
@@ -79,6 +96,12 @@ class UIManager {
       setTimeout(() => {
         clearInterval(checkInterval);
         console.warn('Timed out waiting for UI components');
+        console.log('Available components:', {
+          themeManager: !!window.themeManager,
+          postManager: !!window.postManager,
+          authManager: !!window.authManager,
+          linkManager: !!window.linkManager
+        });
         resolve();
       }, 5000);
     });
@@ -765,5 +788,11 @@ class UIManager {
   }
 }
 
+// Make UIManager available globally
+window.UIManager = UIManager;
+
 // Create and export a singleton instance
 const uiManager = new UIManager();
+
+// Make it available globally
+window.uiManager = uiManager;

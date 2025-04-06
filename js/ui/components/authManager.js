@@ -173,5 +173,5 @@ class AuthManager {
   }
 }
 
-// Create and export a singleton instance
-const authManager = new AuthManager();
+// Make AuthManager available globally
+window.AuthManager = AuthManager;

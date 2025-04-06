@@ -111,7 +111,13 @@ class LinkManager {
           
           // Reload posts
           if (window.postManager) {
+            console.log('Reloading posts via postManager');
             window.postManager.resetAndReload();
+          } else if (window.uiManager && window.uiManager.components && window.uiManager.components.posts) {
+            console.log('Reloading posts via uiManager.components.posts');
+            window.uiManager.components.posts.resetAndReload();
+          } else {
+            console.error('Cannot reload posts: postManager not available');
           }
         } catch (error) {
           console.error('Error saving link:', error);
@@ -141,5 +147,5 @@ class LinkManager {
   }
 }
 
-// Create and export a singleton instance
-const linkManager = new LinkManager();
+// Make LinkManager available globally
+window.LinkManager = LinkManager;
