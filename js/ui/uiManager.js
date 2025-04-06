@@ -212,6 +212,9 @@ class UIManager {
     const linkUrl = document.getElementById('linkUrl');
     const linkTags = document.getElementById('linkTags');
     const saveModalBtn = document.getElementById('saveModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    
+    console.log('Opening add link modal', { isEdit, post });
     
     // Set modal title
     if (modalTitle) {
@@ -247,17 +250,28 @@ class UIManager {
       }
     });
     
-    // Set up form submission
-    if (linkForm) {
-      linkForm.onsubmit = async (e) => {
+    // Handle cancel button click
+    if (cancelModalBtn) {
+      cancelModalBtn.onclick = () => {
+        modal.closeTopModal();
+      };
+    }
+    
+    // Handle save button click directly
+    if (saveModalBtn) {
+      saveModalBtn.onclick = async (e) => {
         e.preventDefault();
+        
+        if (!linkForm) return;
         
         const id = linkId.value;
         const url = linkUrl.value.trim();
-        const tags = tagManager.parseTags(linkTags.value);
+        const tags = window.tagManager.parseTags(linkTags.value);
+        
+        console.log('Saving link', { id, url, tags });
         
         if (!url) {
-          toast.error('Please enter a valid URL');
+          window.toast.error('Please enter a valid URL');
           return;
         }
         
@@ -265,8 +279,8 @@ class UIManager {
           if (isEdit) {
             // Update existing post
             const updatedPost = { ...post, tags };
-            await db.updatePost(updatedPost);
-            toast.success('Link updated successfully');
+            await window.db.updatePost(updatedPost);
+            window.toast.success('Link updated successfully');
           } else {
             // Add new post
             const platform = this.detectPlatform(url);
@@ -277,18 +291,31 @@ class UIManager {
               dateAdded: new Date().toISOString()
             };
             
-            await db.addPost(newPost);
-            toast.success('Link added successfully');
+            console.log('Adding new post', newPost);
+            await window.db.addPost(newPost);
+            window.toast.success('Link added successfully');
           }
           
           // Close modal
-          modal.closeTopModal();
+          window.modal.closeTopModal();
           
           // Reload posts
           this.resetAndReload();
         } catch (error) {
           console.error('Error saving link:', error);
-          toast.error(isEdit ? 'Failed to update link' : 'Failed to add link');
+          window.toast.error(isEdit ? 'Failed to update link' : 'Failed to add link');
+        }
+      };
+    }
+    
+    // Also set up form submission as a backup
+    if (linkForm) {
+      linkForm.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        // Trigger the save button click handler
+        if (saveModalBtn) {
+          saveModalBtn.click();
         }
       };
     }
