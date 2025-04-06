@@ -348,14 +348,26 @@ class UIManager {
    * Reset and reload posts
    */
   resetAndReload() {
+    console.log('Resetting and reloading posts');
+    
+    // Reset pagination
     this.currentPage = 0;
     this.hasMorePosts = true;
     
+    // Clear existing posts
     if (this.postsContainer) {
       this.postsContainer.innerHTML = '';
+      console.log('Cleared posts container');
     }
     
-    this.loadPosts();
+    // Show loading indicator
+    this.showLoading();
+    
+    // Add a small delay to ensure UI updates
+    setTimeout(() => {
+      // Load posts
+      this.loadPosts();
+    }, 100);
   }
 
   /**
@@ -365,13 +377,17 @@ class UIManager {
     if (this.isLoading || !this.hasMorePosts) return;
     
     this.showLoading();
+    this.isLoading = true;
     
     try {
+      console.log('Loading posts, page:', this.currentPage);
+      
       // Get active tag filters
-      const tagFilters = tagManager.getActiveFilters();
+      const tagFilters = window.tagManager.getActiveFilters();
+      console.log('Tag filters:', tagFilters);
       
       // Load posts
-      const posts = await db.getAllPosts({
+      const posts = await window.db.getAllPosts({
         limit: this.postsPerPage,
         offset: this.currentPage * this.postsPerPage,
         sortBy: this.currentSort.by,
@@ -379,6 +395,8 @@ class UIManager {
         filterTags: tagFilters.length > 0 ? tagFilters : null,
         searchTerm: this.currentSearchTerm || null
       });
+      
+      console.log('Loaded posts:', posts.length);
       
       // Check if there are more posts
       this.hasMorePosts = posts.length === this.postsPerPage;
@@ -390,12 +408,18 @@ class UIManager {
       this.renderPosts(posts);
       
       // Show empty state if no posts
-      this.toggleEmptyState(this.currentPage === 1 && posts.length === 0);
+      const isEmpty = this.currentPage === 1 && posts.length === 0;
+      console.log('Is empty state:', isEmpty);
+      this.toggleEmptyState(isEmpty);
+      
+      return posts;
     } catch (error) {
       console.error('Error loading posts:', error);
-      toast.error('Failed to load posts');
+      window.toast.error('Failed to load posts');
+      return [];
     } finally {
       this.hideLoading();
+      this.isLoading = false;
     }
   }
 
@@ -675,6 +699,26 @@ class UIManager {
     
     if (this.loadingIndicator) {
       this.loadingIndicator.classList.add('hidden');
+    }
+  }
+  
+  /**
+   * Toggle empty state visibility
+   * @param {boolean} isEmpty - Whether to show the empty state
+   */
+  toggleEmptyState(isEmpty) {
+    console.log('Toggling empty state:', isEmpty);
+    
+    if (!this.emptyState) return;
+    
+    if (isEmpty) {
+      this.emptyState.classList.remove('hidden');
+      this.postsContainer.classList.add('hidden');
+      console.log('Showing empty state');
+    } else {
+      this.emptyState.classList.add('hidden');
+      this.postsContainer.classList.remove('hidden');
+      console.log('Hiding empty state');
     }
   }
 
