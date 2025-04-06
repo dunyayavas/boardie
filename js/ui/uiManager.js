@@ -213,6 +213,7 @@ class UIManager {
     const linkTags = document.getElementById('linkTags');
     const saveModalBtn = document.getElementById('saveModalBtn');
     const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
     
     console.log('Opening add link modal', { isEdit, post });
     
@@ -232,7 +233,7 @@ class UIManager {
     }
     
     if (linkTags) {
-      linkTags.value = isEdit ? tagManager.formatTags(post.tags) : '';
+      linkTags.value = isEdit ? window.tagManager.formatTags(post.tags) : '';
     }
     
     // Set button text
@@ -240,35 +241,54 @@ class UIManager {
       saveModalBtn.textContent = isEdit ? 'Update' : 'Save';
     }
     
+    // Clear existing event listeners
+    let newSaveBtn, newCancelBtn, newCloseBtn;
+    
+    if (saveModalBtn) {
+      newSaveBtn = saveModalBtn.cloneNode(true);
+      saveModalBtn.parentNode.replaceChild(newSaveBtn, saveModalBtn);
+    }
+    
+    if (cancelModalBtn) {
+      newCancelBtn = cancelModalBtn.cloneNode(true);
+      cancelModalBtn.parentNode.replaceChild(newCancelBtn, cancelModalBtn);
+    }
+    
+    if (closeModalBtn) {
+      newCloseBtn = closeModalBtn.cloneNode(true);
+      closeModalBtn.parentNode.replaceChild(newCloseBtn, closeModalBtn);
+    }
+    
+    // Update references to the new buttons
+    saveModalBtn = newSaveBtn || saveModalBtn;
+    cancelModalBtn = newCancelBtn || cancelModalBtn;
+    closeModalBtn = newCloseBtn || closeModalBtn;
+    
     // Show modal
-    modal.open('linkModal', {
-      onClose: (result) => {
-        // Clear form on close
-        if (linkForm) {
-          linkForm.reset();
-        }
-      }
-    });
+    window.modal.open('linkModal');
+    
+    // Handle close button click
+    if (closeModalBtn) {
+      closeModalBtn.addEventListener('click', () => {
+        window.modal.closeTopModal();
+      });
+    }
     
     // Handle cancel button click
     if (cancelModalBtn) {
-      cancelModalBtn.onclick = () => {
-        modal.closeTopModal();
-      };
+      cancelModalBtn.addEventListener('click', () => {
+        window.modal.closeTopModal();
+      });
     }
     
-    // Handle save button click directly
+    // Handle save button click
     if (saveModalBtn) {
-      saveModalBtn.onclick = async (e) => {
-        e.preventDefault();
-        
-        if (!linkForm) return;
-        
+      saveModalBtn.addEventListener('click', async () => {
         const id = linkId.value;
         const url = linkUrl.value.trim();
         const tags = window.tagManager.parseTags(linkTags.value);
         
-        console.log('Saving link', { id, url, tags });
+        console.log('Save button clicked', { id, url, tags });
         
         if (!url) {
           window.toast.error('Please enter a valid URL');
@@ -305,19 +325,7 @@ class UIManager {
           console.error('Error saving link:', error);
           window.toast.error(isEdit ? 'Failed to update link' : 'Failed to add link');
         }
-      };
-    }
-    
-    // Also set up form submission as a backup
-    if (linkForm) {
-      linkForm.onsubmit = async (e) => {
-        e.preventDefault();
-        
-        // Trigger the save button click handler
-        if (saveModalBtn) {
-          saveModalBtn.click();
-        }
-      };
+      });
     }
   }
 
