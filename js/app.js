@@ -3,10 +3,20 @@
  * Initializes and coordinates all application components
  */
 
+// Global UI component instances
+window.toast = null;
+window.modal = null;
+window.tagManager = null;
+window.uiManager = null;
+
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     console.log(`Initializing Boardie v${CONFIG.app.version}...`);
+    
+    // Initialize UI components first
+    await initializeUIComponents();
+    console.log('UI components initialized');
     
     // Initialize database
     await db.init();
@@ -15,9 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize authentication
     await auth.init();
     console.log('Authentication initialized');
-    
-    // Load UI components
-    await loadUIComponents();
     
     // Set up event listeners
     setupEventListeners();
@@ -34,32 +41,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Boardie initialization complete');
   } catch (error) {
     console.error('Error initializing application:', error);
-    showErrorMessage('Failed to initialize application. Please refresh the page.');
+    // Use alert instead of toast since toast might not be initialized yet
+    alert('Failed to initialize application. Please refresh the page.');
   }
 });
 
 /**
- * Load UI components
+ * Initialize UI components
  * @returns {Promise} Resolves when UI components are loaded
  */
-async function loadUIComponents() {
-  try {
-    // Initialize UI components
-    window.toast = new ToastManager();
-    window.modal = new ModalManager();
-    window.tagManager = new TagManager();
-    
-    // Load tags after tag manager is initialized
-    await window.tagManager.loadAllTags();
-    
-    // Initialize UI manager after other components
-    window.uiManager = new UIManager();
-    
-    return Promise.resolve();
-  } catch (error) {
-    console.error('Error loading UI components:', error);
-    return Promise.reject(error);
-  }
+async function initializeUIComponents() {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create toast manager first since it's used for notifications
+      window.toast = new ToastManager();
+      console.log('Toast manager initialized');
+      
+      // Create modal manager
+      window.modal = new ModalManager();
+      console.log('Modal manager initialized');
+      
+      // Create tag manager
+      window.tagManager = new TagManager();
+      console.log('Tag manager initialized');
+      
+      // Load tags
+      window.tagManager.loadAllTags()
+        .then(() => {
+          console.log('Tags loaded');
+          
+          // Create UI manager last
+          window.uiManager = new UIManager();
+          console.log('UI manager initialized');
+          
+          resolve();
+        })
+        .catch(error => {
+          console.error('Error loading tags:', error);
+          // Continue anyway
+          window.uiManager = new UIManager();
+          resolve();
+        });
+    } catch (error) {
+      console.error('Error initializing UI components:', error);
+      reject(error);
+    }
+  });
 }
 
 /**
@@ -315,8 +342,8 @@ function checkForSharedContent() {
  * @param {string} message - Error message to show
  */
 function showErrorMessage(message) {
-  // Check if toast is available, otherwise use alert
-  if (window.toast) {
+  // Check if toast is available and initialized, otherwise use alert
+  if (window.toast && typeof window.toast.error === 'function') {
     window.toast.error(message);
   } else {
     alert(message);
