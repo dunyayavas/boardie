@@ -146,7 +146,7 @@
           </button>
         </div>
         
-        <div id="linkForm">
+        <form id="linkForm">
           <input type="hidden" id="linkId">
           
           <div class="mb-4">
@@ -165,11 +165,11 @@
             <button type="button" id="cancelModalBtn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Cancel
             </button>
-            <button type="button" id="saveModalBtn" class="px-4 py-2 bg-primary hover:bg-blue-600 text-white rounded-lg">
+            <button type="submit" id="saveModalBtn" class="px-4 py-2 bg-primary hover:bg-blue-600 text-white rounded-lg">
               Save
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   </div>
@@ -251,6 +251,12 @@
   <script src="js/ui/toast.js"></script>
   <script src="js/ui/modal.js"></script>
   <script src="js/ui/tagManager.js"></script>
+  <!-- New Component Modules -->
+  <script src="js/ui/components/themeManager.js"></script>
+  <script src="js/ui/components/postManager.js"></script>
+  <script src="js/ui/components/authManager.js"></script>
+  <script src="js/ui/components/linkManager.js"></script>
+  <!-- Main UI Manager -->
   <script src="js/ui/uiManager.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/embedHandlers.js"></script>

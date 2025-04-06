@@ -3,12 +3,11 @@
  * Initializes and coordinates all application components
  */
 
-// Global component instances
+// Global UI component instances
 window.toast = null;
 window.modal = null;
 window.tagManager = null;
 window.uiManager = null;
-window.db = null;
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', async () => {
@@ -54,10 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initializeUIComponents() {
   return new Promise((resolve, reject) => {
     try {
-      // Create database instance
-      window.db = new BoardieDB();
-      console.log('Database instance created');
-      
       // Create toast manager first since it's used for notifications
       window.toast = new ToastManager();
       console.log('Toast manager initialized');

@@ -4,25 +4,13 @@
  */
 class UIManager {
   constructor() {
-    // UI elements
-    this.postsContainer = document.getElementById('postsContainer');
-    this.loadingIndicator = document.getElementById('loadingIndicator');
-    this.emptyState = document.getElementById('emptyState');
-    this.infiniteScrollSentinel = document.getElementById('infiniteScrollSentinel');
-    this.searchInput = document.getElementById('searchInput');
-    this.sortSelect = document.getElementById('sortSelect');
-    this.themeToggle = document.getElementById('themeToggle');
-    this.addLinkBtn = document.getElementById('addLinkBtn');
-    this.emptyStateAddBtn = document.getElementById('emptyStateAddBtn');
-    
-    // State
-    this.isLoading = false;
-    this.hasMorePosts = true;
-    this.currentPage = 0;
-    this.postsPerPage = CONFIG.ui.postsPerPage || 20;
-    this.currentSearchTerm = '';
-    this.currentSort = { by: 'dateAdded', order: 'desc' };
-    this.isDarkMode = false;
+    // Initialize component references
+    this.components = {
+      theme: null,
+      posts: null,
+      auth: null,
+      link: null
+    };
     
     // Initialize
     this.init();
@@ -32,190 +20,121 @@ class UIManager {
    * Initialize the UI manager
    */
   async init() {
-    // Check for dark mode preference
-    this.checkDarkMode();
+    console.log('Initializing UI Manager...');
     
-    // Set up event listeners
+    // Wait for component initialization
+    await this.initializeComponents();
+    
+    // Set up global event listeners
     this.setupEventListeners();
     
-    // Set up infinite scroll
-    this.setupInfiniteScroll();
-    
-    // Initial UI state
-    this.showLoading();
+    console.log('UI Manager initialized');
   }
 
   /**
-   * Check and apply dark mode preference
+   * Initialize UI components
    */
-  async checkDarkMode() {
+  async initializeComponents() {
     try {
-      // Check saved preference
-      const savedTheme = await db.getSetting('theme', 'system');
+      // Load component modules
+      await this.loadComponentModules();
       
-      if (savedTheme === 'dark') {
-        this.enableDarkMode();
-      } else if (savedTheme === 'light') {
-        this.disableDarkMode();
-      } else {
-        // Check system preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          this.enableDarkMode();
-        } else {
-          this.disableDarkMode();
-        }
-        
-        // Listen for system preference changes
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-          if (savedTheme === 'system') {
-            if (e.matches) {
-              this.enableDarkMode();
-            } else {
-              this.disableDarkMode();
-            }
-          }
-        });
-      }
+      // Initialize theme manager
+      this.components.theme = window.themeManager;
+      
+      // Initialize post manager
+      this.components.posts = window.postManager;
+      
+      // Initialize auth manager
+      this.components.auth = window.authManager;
+      
+      // Initialize link manager
+      this.components.link = window.linkManager;
+      
+      return Promise.resolve();
     } catch (error) {
-      console.error('Error checking dark mode preference:', error);
+      console.error('Error initializing UI components:', error);
+      return Promise.reject(error);
+    }
+  }
+  
+  /**
+   * Load component modules
+   */
+  async loadComponentModules() {
+    // Components are loaded via script tags in index.html
+    // This method ensures they're all available
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (window.themeManager && 
+            window.postManager && 
+            window.authManager && 
+            window.linkManager) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 50);
       
-      // Fallback to system preference
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        this.enableDarkMode();
-      }
-    }
+      // Safety timeout
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        console.warn('Timed out waiting for UI components');
+        resolve();
+      }, 5000);
+    });
   }
 
   /**
-   * Enable dark mode
-   */
-  enableDarkMode() {
-    document.documentElement.classList.add('dark');
-    this.isDarkMode = true;
-  }
-
-  /**
-   * Disable dark mode
-   */
-  disableDarkMode() {
-    document.documentElement.classList.remove('dark');
-    this.isDarkMode = false;
-  }
-
-  /**
-   * Toggle dark mode
-   */
-  async toggleDarkMode() {
-    if (this.isDarkMode) {
-      this.disableDarkMode();
-      await db.setSetting('theme', 'light');
-    } else {
-      this.enableDarkMode();
-      await db.setSetting('theme', 'dark');
-    }
-  }
-
-  /**
-   * Set up event listeners
+   * Set up global event listeners
    */
   setupEventListeners() {
-    // Theme toggle
-    if (this.themeToggle) {
-      this.themeToggle.addEventListener('click', () => this.toggleDarkMode());
-    }
+    // Set up window resize event for layout updates
+    window.addEventListener('resize', this.debounce(() => {
+      if (this.components.posts) {
+        this.components.posts.updateMasonryLayout();
+      }
+    }, 200));
     
-    // Add link button
-    if (this.addLinkBtn) {
-      this.addLinkBtn.addEventListener('click', () => this.showAddLinkModal());
-    }
-    
-    // Empty state add button
-    if (this.emptyStateAddBtn) {
-      this.emptyStateAddBtn.addEventListener('click', () => this.showAddLinkModal());
-    }
-    
-    // Search input
-    if (this.searchInput) {
-      this.searchInput.addEventListener('input', this.debounce(() => {
-        this.currentSearchTerm = this.searchInput.value.trim();
-        this.resetAndReload();
-      }, CONFIG.ui.debounceDelay || 300));
-    }
-    
-    // Sort select
-    if (this.sortSelect) {
-      this.sortSelect.addEventListener('change', () => {
-        const value = this.sortSelect.value;
-        
-        switch (value) {
-          case 'dateDesc':
-            this.currentSort = { by: 'dateAdded', order: 'desc' };
-            break;
-          case 'dateAsc':
-            this.currentSort = { by: 'dateAdded', order: 'asc' };
-            break;
-          case 'platform':
-            this.currentSort = { by: 'platform', order: 'asc' };
-            break;
-          default:
-            this.currentSort = { by: 'dateAdded', order: 'desc' };
-        }
-        
-        this.resetAndReload();
-      });
-    }
-    
-    // Tag filter changes
-    document.addEventListener('tagfilter:change', () => {
-      this.resetAndReload();
+    // Listen for auth state changes to reload posts
+    auth.onAuthStateChange((user) => {
+      // Reload posts if user changed
+      if (this.components.posts) {
+        this.components.posts.resetAndReload();
+      }
     });
     
-    // Auth state changes
-    auth.onAuthStateChange((user) => {
-      this.updateAuthUI(user);
-      
-      // Reload posts if user changed
-      this.resetAndReload();
+    // Listen for visibility changes to refresh embeds
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.components.posts) {
+        this.components.posts.loadEmbeds();
+      }
     });
   }
 
   /**
-   * Set up infinite scroll
+   * Show add link modal (public method for external calls)
+   * @param {Object} post - Post to edit (optional)
    */
-  setupInfiniteScroll() {
-    if (!this.infiniteScrollSentinel) return;
-    
-    // Create intersection observer
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !this.isLoading && this.hasMorePosts) {
-          this.loadMorePosts();
-        }
-      });
-    }, {
-      rootMargin: `0px 0px ${CONFIG.ui.infiniteScrollThreshold || 300}px 0px`
-    });
-    
-    // Observe sentinel
-    observer.observe(this.infiniteScrollSentinel);
+  showAddLinkModal(post = null) {
+    if (this.components.link) {
+      this.components.link.showAddLinkModal(post);
+    }
   }
 
+  /* The following methods are removed as they're now in separate component files */
+  /*
   /**
    * Show the add link modal
    * @param {Object} post - Existing post for editing (optional)
    */
-  showAddLinkModal(post = null) {
+  _showAddLinkModal(post = null) {
     const isEdit = !!post;
     const modalTitle = document.getElementById('modalTitle');
     const linkForm = document.getElementById('linkForm');
     const linkId = document.getElementById('linkId');
     const linkUrl = document.getElementById('linkUrl');
     const linkTags = document.getElementById('linkTags');
-    let saveModalBtn = document.getElementById('saveModalBtn');
-    let cancelModalBtn = document.getElementById('cancelModalBtn');
-    let closeModalBtn = document.getElementById('closeModalBtn');
-    
-    console.log('Opening add link modal', { isEdit, post });
+    const saveModalBtn = document.getElementById('saveModalBtn');
     
     // Set modal title
     if (modalTitle) {
@@ -233,7 +152,7 @@ class UIManager {
     }
     
     if (linkTags) {
-      linkTags.value = isEdit ? window.tagManager.formatTags(post.tags) : '';
+      linkTags.value = isEdit ? tagManager.formatTags(post.tags) : '';
     }
     
     // Set button text
@@ -241,57 +160,27 @@ class UIManager {
       saveModalBtn.textContent = isEdit ? 'Update' : 'Save';
     }
     
-    // Clear existing event listeners
-    let newSaveBtn, newCancelBtn, newCloseBtn;
-    
-    if (saveModalBtn) {
-      newSaveBtn = saveModalBtn.cloneNode(true);
-      saveModalBtn.parentNode.replaceChild(newSaveBtn, saveModalBtn);
-    }
-    
-    if (cancelModalBtn) {
-      newCancelBtn = cancelModalBtn.cloneNode(true);
-      cancelModalBtn.parentNode.replaceChild(newCancelBtn, cancelModalBtn);
-    }
-    
-    if (closeModalBtn) {
-      newCloseBtn = closeModalBtn.cloneNode(true);
-      closeModalBtn.parentNode.replaceChild(newCloseBtn, closeModalBtn);
-    }
-    
-    // Update references to the new buttons
-    saveModalBtn = newSaveBtn || saveModalBtn;
-    cancelModalBtn = newCancelBtn || cancelModalBtn;
-    closeModalBtn = newCloseBtn || closeModalBtn;
-    
     // Show modal
-    window.modal.open('linkModal');
+    modal.open('linkModal', {
+      onClose: (result) => {
+        // Clear form on close
+        if (linkForm) {
+          linkForm.reset();
+        }
+      }
+    });
     
-    // Handle close button click
-    if (closeModalBtn) {
-      closeModalBtn.addEventListener('click', () => {
-        window.modal.closeTopModal();
-      });
-    }
-    
-    // Handle cancel button click
-    if (cancelModalBtn) {
-      cancelModalBtn.addEventListener('click', () => {
-        window.modal.closeTopModal();
-      });
-    }
-    
-    // Handle save button click
-    if (saveModalBtn) {
-      saveModalBtn.addEventListener('click', async () => {
+    // Set up form submission
+    if (linkForm) {
+      linkForm.onsubmit = async (e) => {
+        e.preventDefault();
+        
         const id = linkId.value;
         const url = linkUrl.value.trim();
-        const tags = window.tagManager.parseTags(linkTags.value);
-        
-        console.log('Save button clicked', { id, url, tags });
+        const tags = tagManager.parseTags(linkTags.value);
         
         if (!url) {
-          window.toast.error('Please enter a valid URL');
+          toast.error('Please enter a valid URL');
           return;
         }
         
@@ -299,8 +188,8 @@ class UIManager {
           if (isEdit) {
             // Update existing post
             const updatedPost = { ...post, tags };
-            await window.db.updatePost(updatedPost);
-            window.toast.success('Link updated successfully');
+            await db.updatePost(updatedPost);
+            toast.success('Link updated successfully');
           } else {
             // Add new post
             const platform = this.detectPlatform(url);
@@ -311,21 +200,20 @@ class UIManager {
               dateAdded: new Date().toISOString()
             };
             
-            console.log('Adding new post', newPost);
-            await window.db.addPost(newPost);
-            window.toast.success('Link added successfully');
+            await db.addPost(newPost);
+            toast.success('Link added successfully');
           }
           
           // Close modal
-          window.modal.closeTopModal();
+          modal.closeTopModal();
           
           // Reload posts
           this.resetAndReload();
         } catch (error) {
           console.error('Error saving link:', error);
-          window.toast.error(isEdit ? 'Failed to update link' : 'Failed to add link');
+          toast.error(isEdit ? 'Failed to update link' : 'Failed to add link');
         }
-      });
+      };
     }
   }
 
@@ -348,26 +236,14 @@ class UIManager {
    * Reset and reload posts
    */
   resetAndReload() {
-    console.log('Resetting and reloading posts');
-    
-    // Reset pagination
     this.currentPage = 0;
     this.hasMorePosts = true;
     
-    // Clear existing posts
     if (this.postsContainer) {
       this.postsContainer.innerHTML = '';
-      console.log('Cleared posts container');
     }
     
-    // Show loading indicator
-    this.showLoading();
-    
-    // Add a small delay to ensure UI updates
-    setTimeout(() => {
-      // Load posts
-      this.loadPosts();
-    }, 100);
+    this.loadPosts();
   }
 
   /**
@@ -377,17 +253,13 @@ class UIManager {
     if (this.isLoading || !this.hasMorePosts) return;
     
     this.showLoading();
-    this.isLoading = true;
     
     try {
-      console.log('Loading posts, page:', this.currentPage);
-      
       // Get active tag filters
-      const tagFilters = window.tagManager.getActiveFilters();
-      console.log('Tag filters:', tagFilters);
+      const tagFilters = tagManager.getActiveFilters();
       
       // Load posts
-      const posts = await window.db.getAllPosts({
+      const posts = await db.getAllPosts({
         limit: this.postsPerPage,
         offset: this.currentPage * this.postsPerPage,
         sortBy: this.currentSort.by,
@@ -395,8 +267,6 @@ class UIManager {
         filterTags: tagFilters.length > 0 ? tagFilters : null,
         searchTerm: this.currentSearchTerm || null
       });
-      
-      console.log('Loaded posts:', posts.length);
       
       // Check if there are more posts
       this.hasMorePosts = posts.length === this.postsPerPage;
@@ -408,18 +278,12 @@ class UIManager {
       this.renderPosts(posts);
       
       // Show empty state if no posts
-      const isEmpty = this.currentPage === 1 && posts.length === 0;
-      console.log('Is empty state:', isEmpty);
-      this.toggleEmptyState(isEmpty);
-      
-      return posts;
+      this.toggleEmptyState(this.currentPage === 1 && posts.length === 0);
     } catch (error) {
       console.error('Error loading posts:', error);
-      window.toast.error('Failed to load posts');
-      return [];
+      toast.error('Failed to load posts');
     } finally {
       this.hideLoading();
-      this.isLoading = false;
     }
   }
 
@@ -699,26 +563,6 @@ class UIManager {
     
     if (this.loadingIndicator) {
       this.loadingIndicator.classList.add('hidden');
-    }
-  }
-  
-  /**
-   * Toggle empty state visibility
-   * @param {boolean} isEmpty - Whether to show the empty state
-   */
-  toggleEmptyState(isEmpty) {
-    console.log('Toggling empty state:', isEmpty);
-    
-    if (!this.emptyState) return;
-    
-    if (isEmpty) {
-      this.emptyState.classList.remove('hidden');
-      this.postsContainer.classList.add('hidden');
-      console.log('Showing empty state');
-    } else {
-      this.emptyState.classList.add('hidden');
-      this.postsContainer.classList.remove('hidden');
-      console.log('Hiding empty state');
     }
   }
 
