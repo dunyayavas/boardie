@@ -1,0 +1,262 @@
+/* Main Styles for Boardie - Social Media Embed Viewer */
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Masonry Grid Layout */
+#postsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-auto-rows: 10px;
+  grid-gap: 1rem;
+}
+
+.post-item {
+  animation: fadeIn 0.3s ease-in-out;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.post-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Tag Styles */
+.tag {
+  transition: all 0.2s ease-in-out;
+}
+
+.tag:hover {
+  transform: scale(1.05);
+}
+
+.tag-filter.active {
+  background-color: #3B82F6;
+  color: white;
+}
+
+/* Toast Notifications */
+.toast {
+  animation: slideUp 0.3s ease-in-out;
+}
+
+/* Loading Animations */
+.loading-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+/* Embed Container Styles */
+.embed-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+}
+
+.embed-container iframe,
+.embed-container object,
+.embed-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Platform-specific styling */
+.platform-twitter {
+  border-color: #1DA1F2;
+}
+
+.platform-instagram {
+  border-color: #E1306C;
+}
+
+.platform-youtube {
+  border-color: #FF0000;
+}
+
+.platform-linkedin {
+  border-color: #0077B5;
+}
+
+.platform-website {
+  border-color: #4CAF50;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  #postsContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .post-item {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Dark mode adjustments */
+.dark .embed-container {
+  background-color: #1F2937;
+}
+
+/* Drag and drop styles */
+.dragging {
+  opacity: 0.7;
+  cursor: grabbing;
+}
+
+.drop-target {
+  border: 2px dashed #3B82F6;
+}
+
+/* Offline indicator */
+.offline-indicator {
+  background-color: #EF4444;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  display: none;
+}
+
+body.offline .offline-indicator {
+  display: inline-flex;
+}
+
+/* Placeholder loading animation */
+.placeholder-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Rich preview styles for website embeds */
+.website-preview {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  transition: all 0.2s ease-in-out;
+}
+
+.website-preview:hover {
+  border-color: #3B82F6;
+}
+
+.website-preview-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background-color: #F3F4F6;
+}
+
+.website-preview-content {
+  padding: 1rem;
+}
+
+.website-preview-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.website-preview-description {
+  color: #6B7280;
+  font-size: 0.875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.website-preview-url {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #6B7280;
+  margin-top: 0.5rem;
+}
+
+.website-preview-favicon {
+  width: 16px;
+  height: 16px;
+  margin-right: 0.5rem;
+}
+
+/* Infinite scroll loading indicator */
+#infiniteScrollSpinner {
+  display: none;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+/* PWA installation prompt */
+.install-prompt {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  z-index: 40;
+  max-width: 90%;
+  width: 400px;
+  display: none;
+  animation: slideUp 0.3s ease-in-out;
+}
+
+.dark .install-prompt {
+  background-color: #1F2937;
+  color: white;
+}
