@@ -211,9 +211,9 @@ class UIManager {
     const linkId = document.getElementById('linkId');
     const linkUrl = document.getElementById('linkUrl');
     const linkTags = document.getElementById('linkTags');
-    const saveModalBtn = document.getElementById('saveModalBtn');
-    const cancelModalBtn = document.getElementById('cancelModalBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
+    let saveModalBtn = document.getElementById('saveModalBtn');
+    let cancelModalBtn = document.getElementById('cancelModalBtn');
+    let closeModalBtn = document.getElementById('closeModalBtn');
     
     console.log('Opening add link modal', { isEdit, post });
     
