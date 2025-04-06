@@ -43,16 +43,23 @@ document.addEventListener('DOMContentLoaded', async () => {
  * @returns {Promise} Resolves when UI components are loaded
  */
 async function loadUIComponents() {
-  // Load tag manager
-  await tagManager.loadAllTags();
-  
-  // Initialize UI components
-  window.modal = new ModalManager();
-  window.toast = new ToastManager();
-  window.tagManager = new TagManager();
-  window.uiManager = new UIManager();
-  
-  return Promise.resolve();
+  try {
+    // Initialize UI components
+    window.toast = new ToastManager();
+    window.modal = new ModalManager();
+    window.tagManager = new TagManager();
+    
+    // Load tags after tag manager is initialized
+    await window.tagManager.loadAllTags();
+    
+    // Initialize UI manager after other components
+    window.uiManager = new UIManager();
+    
+    return Promise.resolve();
+  } catch (error) {
+    console.error('Error loading UI components:', error);
+    return Promise.reject(error);
+  }
 }
 
 /**
@@ -305,12 +312,16 @@ function checkForSharedContent() {
 
 /**
  * Show error message
- * @param {string} message - Error message to display
+ * @param {string} message - Error message to show
  */
 function showErrorMessage(message) {
-  toast.error(message);
+  // Check if toast is available, otherwise use alert
+  if (window.toast) {
+    window.toast.error(message);
+  } else {
+    alert(message);
+  }
   
-  // Log to console
   console.error(message);
 }
 

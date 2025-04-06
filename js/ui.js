@@ -8,23 +8,26 @@
 // For this demo, we're using script tags in the HTML
 // This file serves as a coordinator for all UI modules
 
+// The UI components will be initialized by app.js
+// This file now serves as a coordinator for global UI events
+
 // Initialize UI when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Initializing UI components...');
+  console.log('Setting up UI coordination...');
   
-  // Check if all UI components are loaded
-  if (typeof toast === 'undefined' || 
-      typeof modal === 'undefined' || 
-      typeof tagManager === 'undefined' || 
-      typeof uiManager === 'undefined') {
-    console.error('UI components not loaded properly');
-    return;
-  }
+  // Set up global UI event delegation when components are ready
+  const checkComponentsInterval = setInterval(() => {
+    if (window.toast && window.modal && window.tagManager && window.uiManager) {
+      clearInterval(checkComponentsInterval);
+      setupGlobalEventDelegation();
+      console.log('UI coordination initialized');
+    }
+  }, 100);
   
-  // Set up global UI event delegation
-  setupGlobalEventDelegation();
-  
-  console.log('UI components initialized');
+  // Safety timeout after 5 seconds
+  setTimeout(() => {
+    clearInterval(checkComponentsInterval);
+  }, 5000);
 });
 
 /**
