@@ -46,8 +46,11 @@ async function loadUIComponents() {
   // Load tag manager
   await tagManager.loadAllTags();
   
-  // Initialize UI manager
-  // This will handle the main UI interactions
+  // Initialize UI components
+  window.modal = new ModalManager();
+  window.toast = new ToastManager();
+  window.tagManager = new TagManager();
+  window.uiManager = new UIManager();
   
   return Promise.resolve();
 }
